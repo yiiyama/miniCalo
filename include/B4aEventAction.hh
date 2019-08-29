@@ -33,7 +33,6 @@
 
 #include "G4UserEventAction.hh"
 #include "globals.hh"
-#include "B4PrimaryGeneratorAction.hh"
 #include "G4StepPoint.hh"
 #include "sensorContainer.h"
 #include "B4DetectorConstruction.hh"
@@ -51,7 +50,7 @@ class B4aEventAction : public G4UserEventAction
 {
 	friend B4RunAction;
   public:
-    B4aEventAction();
+    B4aEventAction(bool particleGun = true);
     virtual ~B4aEventAction();
 
     virtual void  BeginOfEventAction(const G4Event* event);
@@ -76,14 +75,13 @@ class B4aEventAction : public G4UserEventAction
         rechit_detid_.clear();
     }
 
-    void setGenerator(B4PrimaryGeneratorAction * generator){
-    	generator_=generator;
-    }
     void setDetector(B4DetectorConstruction * detector){
     	detector_=detector;
     }
 
   private:
+    bool particleGun_;
+
     G4double  fEnergyAbs;
     std::vector<G4double>  rechit_energy_,rechit_absorber_energy_;
     std::vector<G4double>  rechit_x_;
@@ -101,7 +99,6 @@ class B4aEventAction : public G4UserEventAction
     G4double  fTrackLGap;
 
 
-    B4PrimaryGeneratorAction * generator_;
     B4DetectorConstruction * detector_;
 
 };

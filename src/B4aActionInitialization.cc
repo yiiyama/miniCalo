@@ -30,6 +30,7 @@
 
 #include "B4aActionInitialization.hh"
 #include "B4PrimaryGeneratorAction.hh"
+#include "B4JetGeneratorAction.hh"
 #include "B4RunAction.hh"
 #include "B4aEventAction.hh"
 #include "B4aSteppingAction.hh"
@@ -38,9 +39,10 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 B4aActionInitialization::B4aActionInitialization
-                            (B4DetectorConstruction* detConstruction)
+            (B4DetectorConstruction* detConstruction, bool particleGun/* = true*/)
  : G4VUserActionInitialization(),
-   fDetConstruction(detConstruction)
+   fDetConstruction(detConstruction),
+   particleGun_(particleGun)
 {}
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -52,8 +54,14 @@ B4aActionInitialization::~B4aActionInitialization()
 
 void B4aActionInitialization::BuildForMaster() const
 {
-	auto gen=new B4PrimaryGeneratorAction;
-  auto ev=new B4aEventAction;
+  G4VUserPrimaryGeneratorAction* gen(nullptr);
+
+  if (particleGun_)
+    gen=new B4PrimaryGeneratorAction;
+  else
+    gen=new B4JetGeneratorAction;
+
+  auto ev=new B4aEventAction(particleGun_);
   SetUserAction(new B4RunAction(gen,ev,""));
 }
 
@@ -61,10 +69,17 @@ void B4aActionInitialization::BuildForMaster() const
 
 void B4aActionInitialization::Build() const
 {
-	auto gen=new B4PrimaryGeneratorAction;
-  SetUserAction(new B4PrimaryGeneratorAction);
-  auto eventAction = new B4aEventAction;
-  eventAction->setGenerator(gen);
+  G4VUserPrimaryGeneratorAction* gen(nullptr);
+  if (particleGun_) {
+    gen=new B4PrimaryGeneratorAction;
+    SetUserAction(new B4PrimaryGeneratorAction);
+  }
+  else {
+    gen = new B4JetGeneratorAction;
+    SetUserAction(new B4JetGeneratorAction);
+  }
+
+  auto eventAction = new B4aEventAction(particleGun_);
   eventAction->setDetector(fDetConstruction);
   auto runact=new B4RunAction(gen,eventAction,fname_);
   SetUserAction(runact);

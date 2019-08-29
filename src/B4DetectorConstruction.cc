@@ -87,8 +87,8 @@ B4DetectorConstruction::B4DetectorConstruction()
 G4VPhysicalVolume* B4DetectorConstruction::Construct()
 {
 	//DefineGeometry(homogenous_ecal_only);
-	//DefineGeometry(hcal_only_irregular);
-	DefineGeometry(ecal_only_irregular);
+	DefineGeometry(hcal_only_irregular);
+        //DefineGeometry(ecal_only_irregular);
 	// Define materials
 	DefineMaterials();
 
@@ -531,7 +531,7 @@ G4VPhysicalVolume* B4DetectorConstruction::DefineVolumes()
 
 
     //auto calorThickness = nofEELayers * layerThicknessEE + nofHB*layerThicknessHB;
-	auto worldSizeXY = 1.2 * calorSizeXY;
+	auto worldSizeXY = 2. * calorSizeXY;
 	G4double worldSizeZ  = 11 * m;
 
 

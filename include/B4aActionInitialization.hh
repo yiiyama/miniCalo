@@ -42,7 +42,7 @@ class B4DetectorConstruction;
 class B4aActionInitialization : public G4VUserActionInitialization
 {
   public:
-    B4aActionInitialization(B4DetectorConstruction*);
+    B4aActionInitialization(B4DetectorConstruction*, bool particleGun = true);
     virtual ~B4aActionInitialization();
 
     virtual void BuildForMaster() const;
@@ -54,6 +54,7 @@ class B4aActionInitialization : public G4VUserActionInitialization
 
   private:
     B4DetectorConstruction* fDetConstruction;
+    bool particleGun_;
     G4String fname_;
 };
 

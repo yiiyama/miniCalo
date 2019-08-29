@@ -125,7 +125,8 @@ int main(int argc,char** argv)
   auto physicsList = new FTFP_BERT;
   runManager->SetUserInitialization(physicsList);
     
-  auto actionInitialization = new B4aActionInitialization(detConstruction);
+  auto actionInitialization = new B4aActionInitialization(detConstruction, false);
+  //auto actionInitialization = new B4aActionInitialization(detConstruction, true);
   actionInitialization->setFilename(outfile);
   runManager->SetUserInitialization(actionInitialization);
   

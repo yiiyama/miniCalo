@@ -31,6 +31,8 @@
 #include "B4aEventAction.hh"
 #include "B4RunAction.hh"
 #include "B4Analysis.hh"
+#include "B4PrimaryGeneratorAction.hh"
+#include "B4JetGeneratorAction.hh"
 
 #include "G4RunManager.hh"
 #include "G4Event.hh"
@@ -41,13 +43,13 @@
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-B4aEventAction::B4aEventAction()
+B4aEventAction::B4aEventAction(bool particleGun/* = true*/)
  : G4UserEventAction(),
+   particleGun_(particleGun),
    fEnergyAbs(0.),
    fEnergyGap(0.),
    fTrackLAbs(0.),
-   fTrackLGap(0.),
-   generator_(0)
+   fTrackLGap(0.)
 {
 	//create vector ntuple here
 //	auto analysisManager = G4AnalysisManager::Instance();
@@ -189,16 +191,33 @@ void B4aEventAction::EndOfEventAction(const G4Event* event)
 
   
   // fill ntuple
-  int i=0;
-  int ispart[B4PrimaryGeneratorAction::particles_size];
-  for( ;i<B4PrimaryGeneratorAction::particles_size;i++){
-	  ispart[i]=B4PrimaryGeneratorAction::globalgen->isParticle(i);
-	  analysisManager->FillNtupleIColumn(i,ispart[i]);
+  if (particleGun_) {
+    int i=0;
+    int ispart[B4PrimaryGeneratorAction::particles_size];
+    for( ;i<B4PrimaryGeneratorAction::particles_size;i++){
+      ispart[i]=B4PrimaryGeneratorAction::globalgen->isParticle(i);
+      analysisManager->FillNtupleIColumn(i,ispart[i]);
+    }
+    analysisManager->FillNtupleDColumn(i,B4PrimaryGeneratorAction::globalgen->getEnergy());
+    analysisManager->FillNtupleDColumn(i+1,B4PrimaryGeneratorAction::globalgen->getX());
+    analysisManager->FillNtupleDColumn(i+2,B4PrimaryGeneratorAction::globalgen->getY());
+    analysisManager->FillNtupleDColumn(i+3,B4PrimaryGeneratorAction::globalgen->getR());
   }
-  analysisManager->FillNtupleDColumn(i,B4PrimaryGeneratorAction::globalgen->getEnergy());
-  analysisManager->FillNtupleDColumn(i+1,B4PrimaryGeneratorAction::globalgen->getX());
-  analysisManager->FillNtupleDColumn(i+2,B4PrimaryGeneratorAction::globalgen->getY());
-  analysisManager->FillNtupleDColumn(i+3,B4PrimaryGeneratorAction::globalgen->getR());
+  else { // jets
+    auto* gen(B4JetGeneratorAction::globalgen);
+    
+    unsigned i(0);
+    for (; i != B4JetGeneratorAction::nEventTypes; ++i) {
+      if (i == gen->eventType())
+        analysisManager->FillNtupleIColumn(i, 1);
+      else
+        analysisManager->FillNtupleIColumn(i, 0);
+    }
+    analysisManager->FillNtupleDColumn(i,gen->getEnergy());
+    analysisManager->FillNtupleDColumn(i+1,gen->getX());
+    analysisManager->FillNtupleDColumn(i+2,gen->getY());
+    analysisManager->FillNtupleDColumn(i+3,gen->getR());
+  }
 
   //filling deposits and volume info for all volumes automatically..
   for(auto& e:rechit_energy_){

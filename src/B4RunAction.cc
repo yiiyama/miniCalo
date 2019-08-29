@@ -36,12 +36,14 @@
 #include "G4UnitsTable.hh"
 #include "G4SystemOfUnits.hh"
 #include "B4PrimaryGeneratorAction.hh"
+#include "B4JetGeneratorAction.hh"
 
 #include "B4aEventAction.hh"
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-B4RunAction::B4RunAction(B4PrimaryGeneratorAction *gen, B4aEventAction* ev, G4String fname)
- : G4UserRunAction()
+B4RunAction::B4RunAction(G4VUserPrimaryGeneratorAction *gen, B4aEventAction* ev, G4String fname)
+  : G4UserRunAction(),
+    generator_(gen)
 { 
 	fname_=fname;
 	eventact_=ev;
@@ -68,11 +70,17 @@ B4RunAction::B4RunAction(B4PrimaryGeneratorAction *gen, B4aEventAction* ev, G4St
   // Creating ntuple
   //
   analysisManager->CreateNtuple("B4", "Edep and TrackL");
-  generator_=gen;
   G4cout << "creating particle entries" << G4endl;
-  auto parts=generator_->generateAvailableParticles();
-  for(const auto& p:parts){
-	  analysisManager->CreateNtupleIColumn(p);
+  auto* particleGun(dynamic_cast<B4PrimaryGeneratorAction*>(generator_));
+  if (particleGun) {
+    auto parts=particleGun->generateAvailableParticles();
+    for(const auto& p:parts){
+      analysisManager->CreateNtupleIColumn(p);
+    }
+  }
+  else { // jets
+    for (unsigned i(0); i != B4JetGeneratorAction::nEventTypes; ++i)
+      analysisManager->CreateNtupleIColumn(B4JetGeneratorAction::eventTypeName(i));
   }
   analysisManager->CreateNtupleDColumn("true_energy");
   analysisManager->CreateNtupleDColumn("true_x");

@@ -23,65 +23,89 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: B4RunAction.hh 74265 2013-10-02 14:41:20Z gcosmo $
+// $Id: B4JetGeneratorAction.hh 94808 2015-12-10 08:22:26Z gcosmo $
 // 
-/// \file B4RunAction.hh
-/// \brief Definition of the B4RunAction class
+/// \file B4JetGeneratorAction.hh
+/// \brief Definition of the B4JetGeneratorAction class
 
-#ifndef B4RunAction_h
-#define B4RunAction_h 1
+#ifndef B4JetGeneratorAction_h
+#define B4JetGeneratorAction_h 1
 
-#include "G4UserRunAction.hh"
 #include "G4VUserPrimaryGeneratorAction.hh"
 #include "globals.hh"
-#include "G4String.hh"
+#include <vector>
 
-class G4Run;
-class B4aEventAction;
-/// Run action class
-///
-/// It accumulates statistic and computes dispersion of the energy deposit 
-/// and track lengths of charged particles with use of analysis tools:
-/// H1D histograms are created in BeginOfRunAction() for the following 
-/// physics quantities:
-/// - Edep in absorber
-/// - Edep in gap
-/// - Track length in absorber
-/// - Track length in gap
-/// The same values are also saved in the ntuple.
-/// The histograms and ntuple are saved in the output file in a format
-/// accoring to a selected technology in B4Analysis.hh.
-///
-/// In EndOfRunAction(), the accumulated statistic and computed 
-/// dispersion is printed.
-///
+#include "Pythia8/Pythia.h"
 
-class B4RunAction : public G4UserRunAction
+#include "fastjet/JetDefinition.hh"
+#include "fastjet/ClusterSequence.hh"
+#include "fastjet/PseudoJet.hh"
+
+unsigned const NMAX(1024);
+
+class G4ParticleGun;
+class G4Event;
+class TTree;
+
+/// The primary generator action class with pythia + fastjet.
+///
+/// It defines a single particle which hits the calorimeter 
+/// perpendicular to the input face. The type of the particle
+/// can be changed via the G4 build-in commands of G4ParticleGun class 
+/// (see the macros provided with this example).
+
+
+
+class B4JetGeneratorAction : public G4VUserPrimaryGeneratorAction
 {
-  public:
-    B4RunAction(G4VUserPrimaryGeneratorAction* gen, B4aEventAction* e, G4String fn);
-    virtual ~B4RunAction();
+public:
+  B4JetGeneratorAction();    
+  virtual ~B4JetGeneratorAction();
 
-    void linkGenerator(G4VUserPrimaryGeneratorAction* g){
-    	generator_=g;
-    }
-    void linkEventAction(B4aEventAction* e){
-    	eventact_=e;
-    }
+  virtual void GeneratePrimaries(G4Event* event);
 
-    void setFileName(G4String fname){
-    	fname_=fname;
-    }
+  G4double getEnergy()const{return energy_;}
 
-    virtual void BeginOfRunAction(const G4Run*);
-    virtual void   EndOfRunAction(const G4Run*);
-  private:
-    G4VUserPrimaryGeneratorAction * generator_;
-    B4aEventAction* eventact_;
-    G4String fname_;
+  G4double getX()const{return xorig_;}
+  G4double getY()const{return yorig_;}
+  G4double getR()const{return std::sqrt(yorig_*yorig_+xorig_*xorig_);}
+
+  static B4JetGeneratorAction * globalgen;
+
+  enum EventType {
+    kQQ,
+    kGG,
+    nEventTypes
+  };
+
+  EventType eventType() const { return eventType_; }
+  static G4String eventTypeName(unsigned t);
+
+private:
+  G4double energy_;
+  G4double xorig_,yorig_;
+
+  Pythia8::Pythia pyqq_;
+  Pythia8::Pythia pygg_;
+  EventType eventType_;
+  fastjet::JetDefinition* jetDef_;
+  std::vector<fastjet::PseudoJet> fjinputs_;
+
+  bool firstEvent_{true};
+
+  TTree* truthTree_{nullptr};
+  //mkbranch
+  int jetType_;
+  float jetE_;
+  float jetEta_;
+  unsigned nPart_;
+  int partPid_[NMAX];
+  float partE_[NMAX];
+  float partEta_[NMAX];
+  float partPhi_[NMAX];
+  //mkbranch
 };
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 #endif
-
